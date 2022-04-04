@@ -103,7 +103,7 @@ class segnetUp3(nn.Module):
 
 
 class SegNet(nn.Module):
-    def __init__(self, in_channels=3, is_unpooling=True, noise_level=0.15):
+    def __init__(self, in_channels=3, is_unpooling=True, noise_level=0.15, num_classes=10):
         super(SegNet, self).__init__()
 
         self.in_channels = in_channels
@@ -115,6 +115,10 @@ class SegNet(nn.Module):
         self.down3 = segnetDown3(128, 256)
         self.down4 = segnetDown3(256, 512)
         self.down5 = segnetDown3(512, 512)
+
+        self.fc1 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(256, num_classes)
+        self.conf = nn.Linear(512, 1)
 
         self.up5 = segnetUp3(512, 512)
         self.up4 = segnetUp3(512, 256)
@@ -133,13 +137,20 @@ class SegNet(nn.Module):
         # Gaussian noise injection
         down5 = down5 + torch.randn(down5.size()).cuda() * self.noise_level
 
+        # Classifier
+        down5_flatten = down5.view(down5.size(0), -1)
+        classify = self.fc1(down5_flatten)
+        classify = self.fc2(classify)
+        confidence = self.conf(down5_flatten)
+
+
         up5 = self.up5(down5, indices_5, unpool_shape5)
         up4 = self.up4(up5, indices_4, unpool_shape4)
         up3 = self.up3(up4, indices_3, unpool_shape3)
         up2 = self.up2(up3, indices_2, unpool_shape2)
         up1 = self.up1(up2, indices_1, unpool_shape1)
 
-        return up1
+        return up1, classify, confidence
 
     def init_vgg16_params(self, vgg16):
         blocks = [self.down1, self.down2, self.down3, self.down4, self.down5]

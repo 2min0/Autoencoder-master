@@ -23,13 +23,15 @@ parser.add_argument('--batch_size', '-b', type=int, default=256, required=True, 
 parser.add_argument('--learning_rate', '-lr', type=float, default=0.0001, required=True,
                     help='learning rate. default=0.0001')
 parser.add_argument('--epochs', '-e', type=int, default=120, required=True, help='epochs. default=120')
-parser.add_argument('--noise_level', -'n', type=float, default=0.15, required=True,
+parser.add_argument('--noise_level', '-n', type=float, default=0.15, required=True,
                     help='noise injection level. default=0.15')
+parser.add_argument('--num_class', '-c', type=int, default=10, required=True,
+                    help='the number of classes to be classified')
 
 args = parser.parse_args()
 
 
-def train(epoch, train_loader, model, optimizer):
+def train(epoch, train_loader, model, optimizer, num_classes):
     # Ensure dropout layers are in train mode
     model.train()
 
@@ -54,6 +56,7 @@ def train(epoch, train_loader, model, optimizer):
         # Set device options
         x = x.to(device)
         y = y.to(device)
+        y_onehot = encode_onehot(y, num_classes)
 
         # print(np.array(x.size()))
         # >>> [batch size, # of channels, img_width, img_height]
@@ -162,16 +165,16 @@ def main():
     train_data = ImageFolder(root=args.train_data_path, transform=T.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True)
     valid_data = ImageFolder(root=args.valid_data_path, transform=T.ToTensor())
-    val_loader = DataLoader(dataset=valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True)
+    val_loader = DataLoader(dataset=valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 
     # Create SegNet model
-    model = SegNet(in_channels=3, is_unpooling=True, noise_level=args.noise_level)
+    model = SegNet(in_channels=3, is_unpooling=True, noise_level=args.noise_level, num_classes=args.num_class)
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
     model = model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=5e-4)
 
     best_loss = 100000
     epochs_since_improvement = 0
@@ -179,7 +182,7 @@ def main():
     # draw loss graph
     epoch_graph = []
     train_loss_graph = []
-    valid_loss_graph = []
+    val_loss_graph = []
     auto_loss_graph = []
     class_loss_graph = []
 
@@ -192,7 +195,7 @@ def main():
             adjust_learning_rate(optimizer, 0.8)
 
         # One epoch's training
-        train(epoch, train_loader, model, optimizer)
+        train_loss = train(epoch, train_loader, model, optimizer)
 
         # One epoch's validation
         val_loss = valid(val_loader, model)

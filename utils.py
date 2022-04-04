@@ -1,6 +1,7 @@
 import os
 
 from config import *
+import csv
 
 
 def ensure_folder(folder):
@@ -40,3 +41,38 @@ def save_checkpoint(epoch, model, optimizer, val_loss, is_best):
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:
         torch.save(state, '{}/BEST_checkpoint.tar'.format(save_folder))
+
+
+class CSVLogger():
+    def __init__(self, args, filename='log.csv', fieldnames=['epoch']):
+
+        self.filename = filename
+        self.csv_file = open(filename, 'w')
+
+        # Write model configuration at top of csv
+        writer = csv.writer(self.csv_file)
+        for arg in vars(args):
+            writer.writerow([arg, getattr(args, arg)])
+        writer.writerow([''])
+
+        self.writer = csv.DictWriter(self.csv_file, fieldnames=fieldnames)
+        self.writer.writeheader()
+
+        self.csv_file.flush()
+
+    def writerow(self, row):
+        self.writer.writerow(row)
+        self.csv_file.flush()
+
+    def close(self):
+        self.csv_file.close()
+
+
+def encode_onehot(labels, n_classes):
+    onehot = torch.FloatTensor(labels.size()[0], n_classes)
+    labels = labels.data
+    if labels.is_cuda:
+        onehot = onehot.cuda()
+    onehot.zero_()
+    onehot.scatter_(1, labels.view(-1, 1), 1)
+    return onehot
