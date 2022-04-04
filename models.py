@@ -3,6 +3,8 @@ from torchsummary import summary
 
 from config import device, imsize
 
+import torch
+
 
 class conv2DBatchNormRelu(nn.Module):
     def __init__(
@@ -101,11 +103,12 @@ class segnetUp3(nn.Module):
 
 
 class SegNet(nn.Module):
-    def __init__(self, in_channels=3, is_unpooling=True):
+    def __init__(self, in_channels=3, is_unpooling=True, noise_level=0.15):
         super(SegNet, self).__init__()
 
         self.in_channels = in_channels
         self.is_unpooling = is_unpooling
+        self.noise_level = noise_level
 
         self.down1 = segnetDown2(self.in_channels, 64)
         self.down2 = segnetDown2(64, 128)
@@ -126,6 +129,9 @@ class SegNet(nn.Module):
         down3, indices_3, unpool_shape3 = self.down3(down2)
         down4, indices_4, unpool_shape4 = self.down4(down3)
         down5, indices_5, unpool_shape5 = self.down5(down4)
+
+        # Gaussian noise injection
+        down5 = down5 + torch.randn(down5.size()).cuda() * self.noise_level
 
         up5 = self.up5(down5, indices_5, unpool_shape5)
         up4 = self.up4(up5, indices_4, unpool_shape4)

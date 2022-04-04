@@ -24,6 +24,8 @@ parser.add_argument('--batch_size', '-b', type=int, default=256, required=True, 
 parser.add_argument('--learning_rate', '-lr', type=float, default=0.0001, required=True,
                     help='learning rate. default=0.0001')
 parser.add_argument('--epochs', '-e', type=int, default=120, required=True, help='epochs. default=120')
+parser.add_argument('--noise_level', '-n', type=float, default=0.15, required=True,
+                    help='noise injection level. default=0.15')
 
 args = parser.parse_args()
 
@@ -168,7 +170,7 @@ def main():
     val_loader = DataLoader(dataset=valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 
     # Create SegNet model
-    model = SegNet(in_channels=3, is_unpooling=True)
+    model = SegNet(in_channels=3, is_unpooling=True, noise_level=args.noise_level)
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
@@ -224,7 +226,7 @@ def main():
     plt.title('loss')
     plt.plot(np.array(epoch_graph), np.array(train_loss_graph))
     plt.plot(np.array(epoch_graph), np.array(val_loss_graph))
-    plt.savefig('loss.png')
+    plt.savefig('loss_noise_injection.png')
 
 if __name__ == '__main__':
     main()
