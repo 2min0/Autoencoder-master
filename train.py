@@ -61,7 +61,8 @@ def plot_histograms(corr, conf, bins=50, norm_hist=True):
     plt.xlabel('Confidence')
     plt.ylabel('Density')
     plt.legend()
-    plt.savefig('results/[train]_accuracy_conf.png')
+    plt.savefig('results/[train]_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+                + '_a_' + str(args.alpha) + '_accuracy_conf.png')
 
     # # the image buffer acts as if it where a location on disk
     # img_buffer = BytesIO()
@@ -351,7 +352,7 @@ def main():
 
         if not is_best:
             epochs_since_improvement += 1
-            print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
+            print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement))
         else:
             epochs_since_improvement = 0
 
@@ -377,7 +378,8 @@ def main():
             plt.xlabel('Confidence')
             plt.ylabel('Density')
             plt.legend()
-            plt.savefig('results/[train]_confidence_figure.png')
+            plt.savefig('results/[train]_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+                + '_a_' + str(args.alpha) + '_confidence_figure.png')
 
     # save train val loss graph
     plt.figure()
@@ -387,7 +389,8 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.savefig('results/[train]_loss_train_valid.png')
+    plt.savefig('results/[train]_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+                + '_a_' + str(args.alpha) + '_loss_train_valid.png')
 
     # save val recon class loss graph
     plt.figure()
@@ -398,7 +401,8 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.savefig('results/[train]_loss_total_recon_class.png')
+    plt.savefig('results/[train]_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+                + '_a_' + str(args.alpha) + '_loss_total_recon_class.png')
 
 if __name__ == '__main__':
     main()
