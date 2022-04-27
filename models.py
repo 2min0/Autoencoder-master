@@ -1,7 +1,7 @@
-import torch.nn as nn
-from torchsummary import summary
-
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchsummary import summary
 
 
 class conv2DBatchNormRelu(nn.Module):
@@ -70,6 +70,16 @@ class segnetDown3(nn.Module):
         return outputs, indices, unpooled_shape
 
 
+class GAP(nn.Module):
+    def __init__(self):
+        super(GAP, self).__init__()
+        self.GAP = nn.AdaptiveMaxPool2d((1, 1))
+
+    def forward(self, tensor):
+        outputs = self.GAP(tensor)
+        return outputs
+
+
 class segnetUp2(nn.Module):
     def __init__(self, in_size, out_size):
         super(segnetUp2, self).__init__()
@@ -113,6 +123,7 @@ class SegNet(nn.Module):
         self.down3 = segnetDown3(128, 256)
         self.down4 = segnetDown3(256, 512)
         self.down5 = segnetDown3(512, 512)
+        self.GAP = GAP()
 
         self.fc1 = nn.Linear(512, 256)
         self.fc2 = nn.Linear(256, num_classes)
@@ -135,12 +146,12 @@ class SegNet(nn.Module):
         # Gaussian noise injection
         down5 = down5 + torch.randn(down5.size()).cuda() * self.noise_level
 
-        # Classifier
-        down5_flatten = down5.view(down5.size(0), -1)
+        # # classifier input size is fixed: 512
+        down5_1by1 = self.GAP(down5)
+        down5_flatten = down5_1by1.view(down5.size(0), -1)
         classify = self.fc1(down5_flatten)
         classify = self.fc2(classify)
         confidence = self.conf(down5_flatten)
-
 
         up5 = self.up5(down5, indices_5, unpool_shape5)
         up4 = self.up4(up5, indices_4, unpool_shape4)

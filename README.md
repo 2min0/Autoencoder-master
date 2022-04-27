@@ -16,9 +16,13 @@ Cifar 10 dataset
 ## Usage
 
 
-### Train
+### Train (ver1. minibatch max loss)
 ```bash
-$  python train.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+$  CUDA_VISIBLE_DEVICES=0 python train_maxloss_minibatch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+```
+### Train (ver2. stochastic weighted loss)
+```bash
+$  CUDA_VISIBLE_DEVICES=0 python train_weighted_loss.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
 ```
 ### Test Autoencoder
 ```bash
