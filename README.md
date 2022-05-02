@@ -11,18 +11,48 @@ Cifar 10 dataset
 
 ## Architecture
 
-![image](https://github.com/foamliu/Conv-Autoencoder/raw/master/images/segnet.jpg)
+* Autoencoder structure (actually, the last 'Softmax' layer is not needed.)
 
+![image](https://github.com/foamliu/Conv-Autoencoder/raw/master/images/segnet.jpg)
+* Autoencoder + Classifier structure
+  * can distinguish major, minor, and odd data using both autoencoder output and classifier output.
+
+![image](https://user-images.githubusercontent.com/90391927/166187657-97a23864-f827-4f7f-94a6-056a3022bcb8.png)
 ## Usage
 
 
-### Train (ver1. minibatch max loss)
+### Train (ver1. vanilla autoencoder)
 ```bash
-$  CUDA_VISIBLE_DEVICES=0 python train_maxloss_minibatch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+$  CUDA_VISIBLE_DEVICES=0 python train_autoencoder.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10
 ```
-### Train (ver2. stochastic weighted loss)
+### Train (ver2. batch training, max loss)
+* In this mode, save all loss values and only back propagate one max loss per one epoch.
+* Therefore, actually the batch size (-b 64) is meaningless.
 ```bash
-$  CUDA_VISIBLE_DEVICES=0 python train_weighted_loss.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+$  CUDA_VISIBLE_DEVICES=0 python train_maxloss_batch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+```
+### Train (ver3. minibatch training, weighted loss)
+* In this mode, save all loss values and set a threshold as '1.5 x average loss'.
+* And then, for the losses whose value is greater than the threshold, use '1.5 x loss' instead of 'loss'.
+```bash
+$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 64 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+```
+### Train (ver4. stochastic training, weighted loss)
+* Same as ver3, but stochastic training.
+* Use SGD optimizer instead of Adam optimizer.
+```bash
+$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_stochastic.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+```
+### Train (ver5. minibatch training, revised weighted loss)
+* Use squared MSE loss to obtain weighted loss effect.
+```bash
+$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch_revised.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+```
+### Train (ver6. minibatch training, revised weihgted loss, resampling)
+* Use squared MSE loss to obtain weighted loss effect.
+* By using _'-r 3'_, we can sample minor data 3 times more than major data.
+```bash
+$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch_revised_resample.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2 -r 3
 ```
 ### Test Autoencoder
 ```bash

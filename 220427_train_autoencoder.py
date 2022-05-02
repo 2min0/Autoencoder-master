@@ -1,5 +1,5 @@
 import time
-import visdom
+import datetime
 import argparse
 
 import numpy as np
@@ -17,6 +17,8 @@ from utils import *
 
 import seaborn as sns # import this after torch or it will break everything
 
+d_today = datetime.date.today()
+d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train-data-path', '-train', type=str, default='data/cifar-10/cifar10_train', required=True,
@@ -51,7 +53,7 @@ def plot_histograms(corr, conf, bins=50, norm_hist=True):
     plt.ylabel('Density')
     plt.legend()
     plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                 + '_accuracy_conf.png')
+                 + '_accuracy_conf_' + d_today + '.png')
 
 
 def train(epoch, train_loader, model, optimizer, correct_count, total):
@@ -258,7 +260,7 @@ def main():
         # Save checkpoint
         if is_best:
             torch.save(model.state_dict(), 'models/BEST_checkpoint_autoencoder' + '_b_' + str(args.batch_size)
-                       + '_n_' + str(args.noise_level) + '.pt')
+                       + '_n_' + str(args.noise_level) + '_' + d_today + '.pt')
             # draw confidence graph
             _, mjr_scores = valid(mjr_loader, model)
             _, mir_scores = valid(mir_loader, model)
@@ -271,7 +273,7 @@ def main():
             plt.ylabel('Density')
             plt.legend()
             plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                        + '_confidence_figure.png')
+                        + '_confidence_figure_' + d_today + '.png')
 
     # save train val loss graph
     plt.figure()
@@ -282,7 +284,7 @@ def main():
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                + '_loss_train_valid.png')
+                + '_loss_train_valid_' + d_today + '.png')
 
 if __name__ == '__main__':
     main()
