@@ -43,16 +43,16 @@ $  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch.py -train 'data/cifa
 ```bash
 $  CUDA_VISIBLE_DEVICES=0 python train_weightloss_stochastic.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
 ```
-### Train (ver5. minibatch training, revised weighted loss)
+### Train (ver5. minibatch training, squared MSE loss)
 * Use squared MSE loss to obtain weighted loss effect.
 ```bash
-$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch_revised.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
+$  CUDA_VISIBLE_DEVICES=0 python train_squaredMSEloss_minibatch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2
 ```
-### Train (ver6. minibatch training, revised weihgted loss, resampling)
-* Use squared MSE loss to obtain weighted loss effect.
+### BEST Train: ver3. minibatch training, weighted loss
 * By using _'-r 3'_, we can sample minor data 3 times more than major data.
+* This resampling function can be used in all versions above.
 ```bash
-$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch_revised_resample.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2 -r 3
+$  CUDA_VISIBLE_DEVICES=0 python train_weightloss_minibatch.py -train 'data/cifar-10/cifar10_train' -valid 'data/cifar-10/cifar10_valid' -mjr 'data/cifar-10/cifar10_mjr_test' -mir 'data/cifar-10/cifar10_mir_test' -b 1 -lr 0.0001 -e 300 -n 0.15 -c 10 -a 0.2 -r 3
 ```
 ### Test Autoencoder
 ```bash

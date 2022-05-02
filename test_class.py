@@ -4,6 +4,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+import datetime
 
 
 from torchvision.datasets import ImageFolder
@@ -12,6 +13,8 @@ from torch.utils.data import DataLoader
 from models import SegNet
 from sklearn import metrics
 
+d_today = datetime.date.today()
+d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--major-test-data-path', '-mjr', type=str, default='data/cifar-10/cifar10_mjr_test',
@@ -156,7 +159,7 @@ def main():
     aupr_out = metrics.average_precision_score(-1 * labels + 1, 1 - scores)
 
     # save results to txt file
-    f = open('results/[test_class]_' + args.checkpoint[23:-3] + '.txt', 'w')
+    f = open('results/[test_class]' + args.checkpoint[29:-3] + '_' + d_today + '.txt', 'w')
     f.write("Major accuracy: " + repr(mjr_acc*100) + "\n")
     f.write("Minor accuracy: " + repr(mir_acc*100) + "\n")
     f.write("OOD accuracy: " + repr(ood_acc*100) + "\n")
@@ -186,7 +189,7 @@ def main():
     plt.xlabel('Confidence')
     plt.ylabel('Density')
     plt.legend()
-    plt.savefig('results/[test_class]_' + args.checkpoint[23:-3] + '.png')
+    plt.savefig('results/[test_class]' + args.checkpoint[29:-3] + '_' + d_today+ '.png')
 
 
 if __name__ == '__main__':

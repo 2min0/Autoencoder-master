@@ -1,15 +1,19 @@
 import cv2
 import numpy as np
 import torch
+import datetime
 
 from utils import ensure_folder
 
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms as T
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 import argparse
 from models import SegNet
 
+d_today = datetime.date.today()
+d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--major-test-data-path', '-mjr', type=str, default='data/cifar-10/cifar10_mjr_test',
@@ -47,7 +51,11 @@ def main():
     ensure_folder('results')
 
     # save results to txt file
-    f = open('results/[test_auto]_' + args.checkpoint[23:-3] + '.txt', 'w')
+    f = open('results/[test_auto]' + args.checkpoint[29:-3] + '_' + d_today+ '.txt', 'w')
+
+    # to draw PSNR distribution graph
+    plt.figure()
+    plt.title('(Major, Minor, OOD) PSNR distribution')
 
     # repeat for 3 states: mjr, mir, ood
     for i in range(3):
@@ -83,10 +91,20 @@ def main():
                 cv2.imwrite('images/' + mode + '_{}_out.png'.format(i_batch), out)
                 psnr.append(10. * np.log10(((1.0 ** 2) / ((x_hat.cpu().numpy() - x.cpu().numpy()) ** 2).mean())))
 
+        psnr.sort(reverse=True)
+        # # draw bar graph
+        # plt.bar(np.arange(len(dataloader)), np.array(psnr), label=mode)
+        # draw histogram graph
+        plt.hist(psnr, bins=100, alpha=0.5, label=mode)
         print(mode, ': ', sum(psnr)/len(psnr), '\n')
 
         f.write(repr(mode) + "(PSNR):" + repr(sum(psnr)/len(psnr)) + "\n")
+
+    plt.legend(loc='upper right')
+    plt.xlabel('PSNR')
+    plt.ylabel('# of samples')
+    plt.savefig('results/[test_auto]' + args.checkpoint[29:-3] + '_' + d_today + '.png')
     f.close()
-        
+
 if __name__ == '__main__':
     main()

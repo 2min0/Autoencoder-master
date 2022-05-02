@@ -1,5 +1,5 @@
 import time
-import visdom
+import datetime
 import argparse
 
 import numpy as np
@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
 from torch import nn
+from torch.utils import data
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms as T
@@ -17,6 +18,8 @@ from utils import *
 
 import seaborn as sns # import this after torch or it will break everything
 
+d_today = datetime.date.today()
+d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train-data-path', '-train', type=str, default='data/cifar-10/cifar10_train', required=True,
@@ -35,6 +38,8 @@ parser.add_argument('--noise_level', '-n', type=float, default=0.15, required=Tr
                     help='noise injection level. default=0.15')
 parser.add_argument('--num_class', '-c', type=int, default=10, required=True,
                     help='the number of classes to be classified')
+parser.add_argument('--resample', '-r', type=float, default=3, required=False,
+                    help='Resampling ratio. if it is 3, then resample minor samples 3 times more than major samples')
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -51,7 +56,7 @@ def plot_histograms(corr, conf, bins=50, norm_hist=True):
     plt.ylabel('Density')
     plt.legend()
     plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                 + '_accuracy_conf.png')
+                 + '_accuracy_conf_' + d_today + '.png')
 
 
 def train(epoch, train_loader, model, optimizer, correct_count, total):
@@ -194,7 +199,19 @@ def valid(val_loader, model):
 
 def main():
     train_data = ImageFolder(root=args.train_data_path, transform=T.ToTensor())
-    train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True)
+    if args.resample is not None:
+        print('+++++ Resampling mode +++++')
+        sample_weights = np.ones([len(train_data), ])
+        for i, (img, label) in enumerate(train_data.imgs):
+            if label == 0 or label == 2:
+                sample_weights[i] = args.resample
+        train_sampler = data.WeightedRandomSampler(sample_weights, len(sample_weights), replacement=True)
+    else:
+        train_sampler = data.RandomSampler(train_data)
+
+    # Because we use sampler, 'shuffle' in 'train_loader' must be False.
+    train_loader = DataLoader(dataset=train_data, sampler=train_sampler, batch_size=args.batch_size, shuffle=False,
+                              pin_memory=True)
     valid_data = ImageFolder(root=args.valid_data_path, transform=T.ToTensor())
     val_loader = DataLoader(dataset=valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 
@@ -258,7 +275,7 @@ def main():
         # Save checkpoint
         if is_best:
             torch.save(model.state_dict(), 'models/BEST_checkpoint_autoencoder' + '_b_' + str(args.batch_size)
-                       + '_n_' + str(args.noise_level) + '.pt')
+                       + '_n_' + str(args.noise_level) + '_' + d_today + '.pt')
             # draw confidence graph
             _, mjr_scores = valid(mjr_loader, model)
             _, mir_scores = valid(mir_loader, model)
@@ -271,7 +288,7 @@ def main():
             plt.ylabel('Density')
             plt.legend()
             plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                        + '_confidence_figure.png')
+                        + '_confidence_figure_' + d_today + '.png')
 
     # save train val loss graph
     plt.figure()
@@ -282,7 +299,7 @@ def main():
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.savefig('results/[train]autoencoder_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                + '_loss_train_valid.png')
+                + '_loss_train_valid_' + d_today + '.png')
 
 if __name__ == '__main__':
     main()

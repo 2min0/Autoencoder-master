@@ -39,7 +39,7 @@ parser.add_argument('--noise_level', '-n', type=float, default=0.15, required=Tr
                     help='noise injection level. default=0.15')
 parser.add_argument('--num_class', '-c', type=int, default=10, required=True,
                     help='the number of classes to be classified')
-parser.add_argument('--alpha', '-a', type = float, default=0.5, required=True,
+parser.add_argument('--alpha', '-a', type=float, default=0.5, required=True,
                     help='the rate of autoencoder loss and classifier loss')
 parser.add_argument('--resample', '-r', type=float, default=3, required=False,
                     help='Resampling ratio. if it is 3, then resample minor samples 3 times more than major samples')
@@ -64,16 +64,11 @@ def plot_histograms(corr, conf, bins=50, norm_hist=True):
     plt.xlabel('Confidence')
     plt.ylabel('Density')
     plt.legend()
-    plt.savefig('results/[train]weightloss_minibatch_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+    plt.savefig('results/[train]squaredMSEloss_minibatch_resample_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
                 + '_a_' + str(args.alpha) + '_c_' + str(args.num_class) + '_r_' + str(args.resample) + '_accuracy_conf_' + d_today + '.png')
 
 
 def train(epoch, train_loader, model, optimizer, correct_count, total):
-    #######################
-    # To find average loss
-    #######################
-    model.eval()
-
     # for classifier
     lmbda = 0.1
 
@@ -83,49 +78,6 @@ def train(epoch, train_loader, model, optimizer, correct_count, total):
 
     # loss_record_list
     loss_record_list = []
-
-    # Batches
-    with torch.no_grad():
-        for i_batch, (x, y) in enumerate(train_loader):
-            # Set device options
-            x = x.to(device)
-
-            # Zero gradients
-            optimizer.zero_grad()
-
-            # model output
-            x_hat, _, _ = model(x)
-
-            # RMSE (Root MSE) loss
-            loss = (x_hat[0, :, :, :] - x[0, :, :, :]).pow(2).mean()
-            auto_loss_list.append(loss.cpu())
-
-            if i_batch % 100 == 0:
-                print('Calculate average weight... Epoch: [{0}][{1}/{2}]'.format(epoch, i_batch, len(train_loader)))
-
-    ###############
-    # Loss Sorting
-    ###############
-    # sort: ascending order
-    auto_loss_list.sort()
-
-    # save average autoencoder loss
-    average = sum(auto_loss_list) / len(auto_loss_list)
-
-    ###############################
-    # Print Auto Loss Distribution
-    ###############################
-    plt.figure()
-    plt.title('Weighted Loss')
-    plt.bar(np.arange(len(auto_loss_list)), np.array(auto_loss_list), label='autoencoder loss')
-    plt.axhline(average, color='k', linestyle='dashed', linewidth=1)
-    plt.legend(loc='upper right')
-    plt.xlabel('sample #')
-    plt.ylabel('loss')
-    plt.savefig('results/[train]weightloss_minibatch_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
-                + '_a_' + str(args.alpha) + '_r_' + str(args.resample) + '_loss_distribution_' + d_today + '.png')
-
-    auto_loss_list = []
 
     ###########
     # Training
@@ -138,7 +90,7 @@ def train(epoch, train_loader, model, optimizer, correct_count, total):
     correct_count = 0.
     total = 0.
     for i_batch, (x, y) in enumerate(train_loader):
-       # Set device options
+        # Set device options
         x = x.to(device)
         y = y.to(device)
         y_onehot = encode_onehot(y, args.num_class)
@@ -176,18 +128,16 @@ def train(epoch, train_loader, model, optimizer, correct_count, total):
         else:
             lmbda = lmbda / 0.99
 
+        ################################################
+        # use squared MSE to obtain weighted loss effect
+        ################################################
         auto_loss = 0.
         for i in range(np.array(x.size())[0]):
-            # MSE loss
-            loss = (x_hat[i, :, :, :] - x[i, :, :, :]).pow(2).mean()
-            if loss > average * 1.5:
-                loss = loss * 1.5
+            # SQUARED 'MSE loss': give effects of WEIGHTED loss
+            loss = ((x_hat[i, :, :, :] - x[i, :, :, :]).pow(2).mean())**2
             auto_loss += loss
         auto_loss = auto_loss / args.batch_size
         auto_loss_list.append(auto_loss.cpu())
-
-        # if auto_loss > average * 1.5:
-        #     auto_loss *= 1.5
 
         loss = auto_loss + args.alpha * class_loss
         loss.backward()
@@ -199,8 +149,6 @@ def train(epoch, train_loader, model, optimizer, correct_count, total):
         # classifier
         pred_idx = torch.max(classify.data, 1)[1]
         total += y.size(0)
-        # if pred_idx == y.data:
-        #     correct_count += 1
         correct_count += (pred_idx == y.data).sum()
 
         optimizer.step()
@@ -320,8 +268,7 @@ def main():
         train_sampler = data.RandomSampler(train_data)
 
     # Because we use sampler, 'shuffle' in 'train_loader' must be False.
-    train_loader = DataLoader(dataset=train_data, sampler=train_sampler, batch_size=args.batch_size, shuffle=False,
-                              pin_memory=True)
+    train_loader = DataLoader(dataset=train_data, sampler=train_sampler, batch_size=args.batch_size, shuffle=False, pin_memory=True)
     valid_data = ImageFolder(root=args.valid_data_path, transform=T.ToTensor())
     val_loader = DataLoader(dataset=valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 
@@ -390,7 +337,7 @@ def main():
 
         # Save checkpoint
         if is_best:
-            torch.save(model.state_dict(), 'models/BEST_checkpoint_weightloss_minibatch' + '_b_' + str(args.batch_size)
+            torch.save(model.state_dict(), 'models/BEST_checkpoint_squaredMSEloss_minibatch_resample' + '_b_' + str(args.batch_size)
                        + '_n_' + str(args.noise_level) + '_a_' + str(args.alpha)
                        + '_c_' + str(args.num_class) + '_r_' + str(args.resample) + '_' + d_today + '.pt')
             # draw confidence graph
@@ -404,7 +351,7 @@ def main():
             plt.xlabel('Confidence')
             plt.ylabel('Density')
             plt.legend()
-            plt.savefig('results/[train]weightloss_minibatch_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+            plt.savefig('results/[train]squaredMSEloss_minibatch_resample_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
                 + '_a_' + str(args.alpha) + '_c_' + str(args.num_class) + '_r_' + str(args.resample) + '_confidence_figure_' + d_today + '.png')
 
     # save train val loss graph
@@ -415,7 +362,7 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.savefig('results/[train]weightloss_minibatch_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+    plt.savefig('results/[train]squaredMSEloss_minibatch_resample_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
                 + '_a_' + str(args.alpha) + '_c_' + str(args.num_class) + '_r_' + str(args.resample) + '_loss_train_valid_' + d_today + '.png')
 
     # save val recon class loss graph
@@ -427,7 +374,7 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.savefig('results/[train]weightloss_minibatch_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
+    plt.savefig('results/[train]squaredMSEloss_minibatch_resample_b_' + str(args.batch_size) + '_n_' + str(args.noise_level)
                 + '_a_' + str(args.alpha) + '_c_' + str(args.num_class) + '_r_' + str(args.resample) + '_loss_total_recon_class_' + d_today + '.png')
 
 
