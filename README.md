@@ -1,7 +1,7 @@
 # Autoencoder
 
 This repository is to do convolutional autoencoder with SetNet based on Cars Dataset from Stanford.
-
+Usually _'minibatch'_ mode performs better than _'batch'_ or _'stochastic_' modes.
 
 ## Dataset
 Cifar 10 dataset
