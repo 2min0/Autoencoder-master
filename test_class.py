@@ -159,7 +159,7 @@ def main():
     aupr_out = metrics.average_precision_score(-1 * labels + 1, 1 - scores)
 
     # save results to txt file
-    f = open('results/[test_class]' + args.checkpoint[29:-3] + '_' + d_today + '.txt', 'w')
+    f = open('results/[test_class]' + args.checkpoint[29:-3] + '.txt', 'w')
     f.write("Major accuracy: " + repr(mjr_acc*100) + "\n")
     f.write("Minor accuracy: " + repr(mir_acc*100) + "\n")
     f.write("OOD accuracy: " + repr(ood_acc*100) + "\n")
@@ -189,7 +189,7 @@ def main():
     plt.xlabel('Confidence')
     plt.ylabel('Density')
     plt.legend()
-    plt.savefig('results/[test_class]' + args.checkpoint[29:-3] + '_' + d_today+ '.png')
+    plt.savefig('results/[test_class]' + args.checkpoint[29:-3] + '.png')
 
 
 if __name__ == '__main__':

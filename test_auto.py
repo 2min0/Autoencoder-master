@@ -12,9 +12,6 @@ import matplotlib.pyplot as plt
 import argparse
 from models import SegNet
 
-d_today = datetime.date.today()
-d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--major-test-data-path', '-mjr', type=str, default='data/cifar-10/cifar10_mjr_test',
                     required=True, help='major test data path: data/cifar-10/cifar10_mjr_test')
@@ -51,7 +48,7 @@ def main():
     ensure_folder('results')
 
     # save results to txt file
-    f = open('results/[test_auto]' + args.checkpoint[29:-3] + '_' + d_today+ '.txt', 'w')
+    f = open('results/[test_auto]' + args.checkpoint[29:-3] + '.txt', 'w')
 
     # to draw PSNR distribution graph
     plt.figure()
@@ -103,7 +100,7 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('PSNR')
     plt.ylabel('# of samples')
-    plt.savefig('results/[test_auto]' + args.checkpoint[29:-3] + '_' + d_today + '.png')
+    plt.savefig('results/[test_auto]' + args.checkpoint[29:-3] + '.png')
     f.close()
 
 if __name__ == '__main__':

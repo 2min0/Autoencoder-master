@@ -19,7 +19,9 @@ from utils import *
 import seaborn as sns # import this after torch or it will break everything
 
 d_today = datetime.date.today()
-d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
+now = datetime.datetime.now()
+nowTime = now.strftime('%H:%M')
+d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10] + '_' + str(nowTime)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train-data-path', '-train', type=str, default='data/cifar-10/cifar10_train', required=True,
