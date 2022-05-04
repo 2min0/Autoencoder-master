@@ -101,7 +101,7 @@ def train(epoch, train_loader, model, optimizer, correct_count, total):
         optimizer.zero_grad()
 
         # model output
-        x_hat, classify, confidence = model(x)
+        _, x_hat, classify, confidence = model(x)
 
         #############
         # Classifier
@@ -200,7 +200,7 @@ def valid(val_loader, model, lmbda):
             y = y.to(device)
             y_onehot = encode_onehot(y, args.num_class)
 
-            x_hat, pred_out, conf_output = model(x)
+            _, x_hat, pred_out, conf_output = model(x)
 
             #############
             # classifier

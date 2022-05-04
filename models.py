@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchsummary import summary
 
 
 class conv2DBatchNormRelu(nn.Module):
@@ -159,7 +157,7 @@ class SegNet(nn.Module):
         up2 = self.up2(up3, indices_2, unpool_shape2)
         up1 = self.up1(up2, indices_1, unpool_shape1)
 
-        return up1, classify, confidence
+        return down5_1by1, up1, classify, confidence
 
     def init_vgg16_params(self, vgg16):
         blocks = [self.down1, self.down2, self.down3, self.down4, self.down5]
@@ -195,9 +193,3 @@ class SegNet(nn.Module):
                 assert l1.bias.size() == l2.bias.size()
                 l2.weight.data = l1.weight.data
                 l2.bias.data = l1.bias.data
-
-
-if __name__ == '__main__':
-    model = SegNet().to(device)
-
-    summary(model, (3, imsize, imsize))

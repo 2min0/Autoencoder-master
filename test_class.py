@@ -4,8 +4,6 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-import datetime
-
 
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import transforms as T
@@ -13,8 +11,6 @@ from torch.utils.data import DataLoader
 from models import SegNet
 from sklearn import metrics
 
-d_today = datetime.date.today()
-d_today = str(d_today)[2:4] + str(d_today)[5:7] + str(d_today)[8:10]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--major-test-data-path', '-mjr', type=str, default='data/cifar-10/cifar10_mjr_test',
@@ -109,7 +105,7 @@ def test(dataloader):
             x = x.to(device)
             y = y.to(device)
 
-            x_hat, classify_out, confidence_out = model(x)
+            _, x_hat, classify_out, confidence_out = model(x)
 
             # confidence part
             confidence = torch.sigmoid(confidence_out)
@@ -152,33 +148,33 @@ def main():
 
     ind_scores = np.concatenate([mjr_scores, mir_scores])
 
-    fpr_at_95_tpr = tpr95(ind_scores, ood_scores)
-    detection_error, best_delta = detection(ind_scores, ood_scores)
-    auroc = metrics.roc_auc_score(labels, scores)
-    aupr_in = metrics.average_precision_score(labels, scores)
-    aupr_out = metrics.average_precision_score(-1 * labels + 1, 1 - scores)
+    # fpr_at_95_tpr = tpr95(ind_scores, ood_scores)
+    # detection_error, best_delta = detection(ind_scores, ood_scores)
+    # auroc = metrics.roc_auc_score(labels, scores)
+    # aupr_in = metrics.average_precision_score(labels, scores)
+    # aupr_out = metrics.average_precision_score(-1 * labels + 1, 1 - scores)
 
     # save results to txt file
-    f = open('results/[test_class]' + args.checkpoint[29:-3] + '.txt', 'w')
+    f = open('results/[test_class]' + args.checkpoint[23:-3] + '.txt', 'w')
     f.write("Major accuracy: " + repr(mjr_acc*100) + "\n")
     f.write("Minor accuracy: " + repr(mir_acc*100) + "\n")
     f.write("OOD accuracy: " + repr(ood_acc*100) + "\n")
-    f.write("TPR95 (lower is better): " + repr(fpr_at_95_tpr) + "\n")
-    f.write("Detection error (lower is better): " + repr(detection_error) + "\n")
-    f.write("Best threshold:" + repr(best_delta) + "\n")
-    f.write("AUROC (higher is better): " + repr(auroc) + "\n")
-    f.write("AUPR_IN (higher is better): " + repr(aupr_in) + "\n")
-    f.write("AUPR_OUT (higher is better): " + repr(aupr_out) + "\n")
+    # f.write("TPR95 (lower is better): " + repr(fpr_at_95_tpr) + "\n")
+    # f.write("Detection error (lower is better): " + repr(detection_error) + "\n")
+    # f.write("Best threshold:" + repr(best_delta) + "\n")
+    # f.write("AUROC (higher is better): " + repr(auroc) + "\n")
+    # f.write("AUPR_IN (higher is better): " + repr(aupr_in) + "\n")
+    # f.write("AUPR_OUT (higher is better): " + repr(aupr_out) + "\n")
     f.close()
 
-    # print results
-    print("")
-    print("TPR95 (lower is better): ", fpr_at_95_tpr)
-    print("Detection error (lower is better): ", detection_error)
-    print("Best threshold:", best_delta)
-    print("AUROC (higher is better): ", auroc)
-    print("AUPR_IN (higher is better): ", aupr_in)
-    print("AUPR_OUT (higher is better): ", aupr_out)
+    # # print results
+    # print("")
+    # print("TPR95 (lower is better): ", fpr_at_95_tpr)
+    # print("Detection error (lower is better): ", detection_error)
+    # print("Best threshold:", best_delta)
+    # print("AUROC (higher is better): ", auroc)
+    # print("AUPR_IN (higher is better): ", aupr_in)
+    # print("AUPR_OUT (higher is better): ", aupr_out)
 
     # save confidence graph
     ranges = (np.min(scores), np.max(scores))
@@ -189,7 +185,7 @@ def main():
     plt.xlabel('Confidence')
     plt.ylabel('Density')
     plt.legend()
-    plt.savefig('results/[test_class]' + args.checkpoint[29:-3] + '.png')
+    plt.savefig('results/[test_class]' + args.checkpoint[23:-3] + '.png')
 
 
 if __name__ == '__main__':

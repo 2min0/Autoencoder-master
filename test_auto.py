@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import torch
-import datetime
 
 from utils import ensure_folder
 
@@ -48,7 +47,7 @@ def main():
     ensure_folder('results')
 
     # save results to txt file
-    f = open('results/[test_auto]' + args.checkpoint[29:-3] + '.txt', 'w')
+    f = open('results/[test_auto]' + args.checkpoint[23:-3] + '.txt', 'w')
 
     # to draw PSNR distribution graph
     plt.figure()
@@ -75,7 +74,7 @@ def main():
                 x = x.to(device)
                 y = y.to(device)
 
-                x_hat, _, _ = model(x)
+                _, x_hat, _, _ = model(x)
 
                 out = x_hat.cpu().numpy()
                 # reshape [1, 3, 32, 32] -> [3, 32, 32]
@@ -100,7 +99,7 @@ def main():
     plt.legend(loc='upper right')
     plt.xlabel('PSNR')
     plt.ylabel('# of samples')
-    plt.savefig('results/[test_auto]' + args.checkpoint[29:-3] + '.png')
+    plt.savefig('results/[test_auto]' + args.checkpoint[23:-3] + '.png')
     f.close()
 
 if __name__ == '__main__':
